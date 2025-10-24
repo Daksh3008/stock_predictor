@@ -35,7 +35,7 @@ def main():
     predicted_value = predict_for_date(model, scaler, scaled, lookback, df, target_date, freq)
     print(f"\n🔮 Predicted {price_type} price for {ticker} on {target_date}: ₹{predicted_value:,.2f}\n")
 
-    plot_actual_vs_predicted(df, price_type, scaler, model, lookback)
+    #plot_actual_vs_predicted(df, price_type, scaler, model, lookback)
 
 if __name__ == "__main__":
     main()
