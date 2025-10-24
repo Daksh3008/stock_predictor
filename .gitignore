@@ -1,0 +1,45 @@
+# -----------------
+# Python & ML .gitignore
+# -----------------
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs and checkpoints
+*.log
+*.out
+*.err
+*.ckpt
+
+# TensorFlow / Keras saved models
+*.h5
+*.hdf5
+*.pb
+*.tflite
+*.pkl
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+.history/
+
+# OS temporary files
+*.swp
+*.tmp
+
+# Data folders (optional)
+data/
+datasets/
