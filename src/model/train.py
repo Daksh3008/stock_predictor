@@ -7,6 +7,6 @@ def train_model(model, X_train, y_train, X_val, y_val, epochs=100, batch_size=16
         validation_data=(X_val, y_val),
         epochs=epochs,
         batch_size=batch_size,
-        verbose=1,
+        verbose=0,
         callbacks=[es]
     )
