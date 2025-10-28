@@ -1,0 +1,23 @@
+models:
+  lstm:
+    enabled: true
+    priority: 1
+  prophet:
+    enabled: false
+    priority: 1
+  xgboost:
+    enabled: true
+    priority: 2
+  random_forest:
+    enabled: true
+    priority: 3
+  linear_regression:
+    enabled: true
+    priority: 4
+
+prediction:
+  ensemble_method: "weighted_average"
+  min_data_points: 30
+  # Optional overrides
+  start_date: "2005-01-01"
+  frequency: null   # null => infer from user text ("next month" => monthly)
