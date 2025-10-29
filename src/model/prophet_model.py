@@ -1,16 +1,27 @@
-from prophet import Prophet
+from neuralprophet import NeuralProphet
 import pandas as pd
 
-def train_prophet(df_prophet_train: pd.DataFrame):
-    m = Prophet(
-        daily_seasonality=True, weekly_seasonality=True, yearly_seasonality=True
+def train_neuralprophet(df_prophet_train: pd.DataFrame):
+    m = NeuralProphet(
+        yearly_seasonality=True,
+        weekly_seasonality=True,
+        daily_seasonality=False,
+        epochs=50,
+        learning_rate=1.0,
     )
-    m.fit(df_prophet_train)
+    m.fit(df_prophet_train, freq="D", minimal=True)
+
+    # ✅ Store training data inside model for future prediction calls
+    m.input_df = df_prophet_train.copy()
+
     return m
 
-def prophet_forecast_values(model, steps: int):
-    # daily steps ahead
-    future = model.make_future_dataframe(periods=steps, freq="D")
-    fc = model.predict(future)
-    # return only the new tail (future part)
-    return fc["yhat"].tail(steps).values
+def neuralprophet_forecast(model, steps: int):
+    # ✅ Pass input df explicitly
+    future = model.make_future_dataframe(
+        model.input_df,
+        periods=steps,
+        n_historic_predictions=False
+    )
+    forecast = model.predict(future)
+    return forecast["yhat1"].tail(steps).values

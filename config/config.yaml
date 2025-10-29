@@ -3,7 +3,7 @@ models:
     enabled: true
     priority: 1
   prophet:
-    enabled: false
+    enabled: true
     priority: 1
   xgboost:
     enabled: true

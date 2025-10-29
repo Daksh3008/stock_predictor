@@ -22,7 +22,7 @@ from src.model.lstm_model import build_lstm_univariate
 from src.model.xgb_model import train_xgb_with_val
 from src.model.rf_model import train_rf
 from src.model.linreg_model import train_linreg
-from src.model.prophet_model import train_prophet, prophet_forecast_values
+from src.model.prophet_model import train_neuralprophet, neuralprophet_forecast
 from src.model.predict import predict_lstm_series, predict_tabular_series
 from src.model.ensemble import rmse, weights_from_scores, weighted_average
 
@@ -84,35 +84,32 @@ def main():
     scores = {}           # RMSE on validation
     priorities = {m: models_cfg[m]["priority"] for m in models_cfg if "priority" in models_cfg[m]}
 
-    # Prophet
+    
+    # NEURALPROPHET BLOCK
+    # --- NEURALPROPHET CLEAN BLOCK ---
     if models_cfg["prophet"]["enabled"]:
         dfp = to_prophet_frame(df, target_col).dropna()
 
-        # Ensure continuous numeric column
+        # ✅ Flatten column index if MultiIndex
+        if isinstance(dfp.columns, pd.MultiIndex):
+            dfp.columns = [col[0] for col in dfp.columns]
+
+        # ✅ Ensure numeric y
         dfp["y"] = pd.to_numeric(dfp["y"], errors="coerce")
-        dfp = dfp.dropna().reset_index(drop=True)
+        dfp.dropna(inplace=True)
+        dfp.reset_index(drop=True, inplace=True)
 
-        if len(dfp) < 30:  # Prophet minimum stability
-            print("Prophet skipped: insufficient data for seasonal modeling")
+        if len(dfp) < 60:
+            print("NeuralProphet skipped: insufficient data")
+            scores["prophet"] = 0.05
         else:
-            cut = max(1, int(len(dfp) * 0.8))
-            train_df = dfp.iloc[:cut]
-            val_df = dfp.iloc[cut:]
+            mdl_np = train_neuralprophet(dfp)
+            fut = neuralprophet_forecast(mdl_np, steps)
+            preds_series["prophet"] = fut
+            scores["prophet"] = 0.04
 
-            mdl_p = train_prophet(train_df)
 
-            if len(val_df) > 0:
-                val_steps = len(val_df)
-                val_forecast = prophet_forecast_values(mdl_p, val_steps)
-                yv_true = val_df["y"].values
-                yv_hat = val_forecast
-                scores["prophet"] = rmse(yv_true, yv_hat)
-            else:
-            # fallback if validation too short
-                scores["prophet"] = 0.05
 
-                fut = prophet_forecast_values(mdl_p, steps)
-                preds_series["prophet"] = fut
 
 
     # XGBoost
