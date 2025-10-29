@@ -15,6 +15,13 @@ def fetch_data(ticker: str, start_date="2010-01-01", end_date=None):
     if df.empty:
         raise ValueError(f"No data found for ticker {ticker}")
 
+    #flatten multiindex columns 
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[0] for col in df.columns]
+    
+    #keep only required OHLC
     df = df[["Open", "High", "Low", "Close"]].dropna()
+
+    #normalize datetime index
     df.index = pd.to_datetime(df.index).tz_localize(None)
     return df

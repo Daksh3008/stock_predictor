@@ -1,15 +1,17 @@
+#dates file to understand date manipulations  of quarter, weeks, months, years
+
+# calendar utilities including Indian fiscal quarters and short horizons >>>
 import pandas as pd
-import re
 
 def end_of_fiscal_quarter(dt: pd.Timestamp) -> pd.Timestamp:
     y, m = dt.year, dt.month
-    if 4 <= m <= 6:   # Q1 (Apr-Jun)
+    if 4 <= m <= 6:   # Q1 (Apr–Jun)
         return pd.Timestamp(y, 6, 30)
-    elif 7 <= m <= 9:  # Q2 (Jul-Sep)
+    elif 7 <= m <= 9: # Q2 (Jul–Sep)
         return pd.Timestamp(y, 9, 30)
-    elif 10 <= m <= 12:  # Q3 (Oct-Dec)
+    elif 10 <= m <= 12: # Q3 (Oct–Dec)
         return pd.Timestamp(y, 12, 31)
-    else:  # Jan-Mar Q4
+    else:             # Q4 (Jan–Mar)
         return pd.Timestamp(y, 3, 31)
 
 def end_of_next_fiscal_quarter(dt: pd.Timestamp) -> pd.Timestamp:
@@ -27,8 +29,39 @@ def end_of_next_year(dt: pd.Timestamp) -> pd.Timestamp:
 def end_of_next_week(dt: pd.Timestamp) -> pd.Timestamp:
     return dt + pd.Timedelta(days=7)
 
-def parse_explicit_days(text: str):
-    m = re.search(r"next\s+(\d+)\s*(day|days)", text.lower())
-    if m:
-        return int(m.group(1))
+# <<< NEW: resolve steps from flags; always daily forecasting >>>
+def resolve_steps_from_flags(flags: dict, last_date: pd.Timestamp) -> tuple[int, str]:
+    # explicit days override
+    if flags.get("explicit_days"):
+        n = int(flags["explicit_days"])
+        return max(1, n), f"next_{n}_days"
+
+    if flags.get("today"):
+        return 1, "today"  # we treat "today" as next step (CP1 current price still shown)
+    if flags.get("tomorrow"):
+        return 2, "tomorrow"  # we’ll also print today & tomorrow separately anyway
+
+    if flags.get("this_quarter"):
+        td = end_of_fiscal_quarter(last_date)
+        return max(1, (td - last_date).days), "this_quarter"
+    if flags.get("quarter"):
+        td = end_of_next_fiscal_quarter(last_date)
+        return max(1, (td - last_date).days), "next_quarter"
+    if flags.get("year"):
+        td = end_of_next_year(last_date)
+        return max(1, (td - last_date).days), "next_year"
+    if flags.get("month"):
+        td = end_of_next_month(last_date)
+        return max(1, (td - last_date).days), "next_month"
+    if flags.get("week"):
+        td = end_of_next_week(last_date)
+        return max(1, (td - last_date).days), "next_week"
+
+    # default fallback (rare)
+    return 30, "next_30_days"
+
+# <<< NEW: simple market-open awareness (for message only) >>>
+def market_closed_today_message(df_index: pd.DatetimeIndex, today: pd.Timestamp) -> str | None:
+    if today.normalize() not in df_index.normalize():
+        return "ℹ️ Market is closed today. Showing forecast instead."
     return None
